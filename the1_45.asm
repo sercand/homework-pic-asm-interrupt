@@ -47,13 +47,19 @@ energy	udata	0x45
 energy
 lightN	udata	0x46
 lightN
+intmode EQU	0x47
+dispctr	EQU	0x48
+digit3	udata	0x49
+digit3
+digit4	udata	0x4A
+digit4
 ;----------------------------------------;
 
-    org	0x00
-	goto    init
+org 0x00
+    goto    init
 
-	org	0x08
-	goto    timer0_isr    ; Goto Interrupt service routine
+org 0x08
+    goto    timer0_isr    ; Goto Interrupt service routine
 
 
 init:
@@ -68,8 +74,6 @@ init:
     CLRF    LATC	;CLEAR LATC
     CLRF    LATD	;CLEAR LATD
     CLRF    LATE	;CLEAR LATE
-    CLRF    LATH	;CLEAR LATH
-    CLRF    LATJ	;CLEAR LATJ   
     
     MOVLW   b'00111111'
     MOVWF   TRISF	;portF will use as Input
@@ -78,25 +82,32 @@ init:
     MOVWF   TRISC	;portC shows Hint
     MOVWF   TRISD	;portD shows Hint
     MOVWF   TRISE	;portE shows enery
-    MOVWF   TRISH	;portH for 7 segment
-    MOVWF   TRISJ	;portJ for 7 segment
+
     
     CLRF    PORTF	;clear PortF
     CLRF    PORTB	;clear PortB
     CLRF    PORTC	;clear PortC
     CLRF    PORTD	;clear PortD
     CLRF    PORTE	;clear PortE
-    CLRF    PORTH	;clear PortD
-    CLRF    PORTJ	;clear PortE
     
     MOVLW   0x0F
     MOVWF   ADCON1
+; for 7-segment Displays
+
+    MOVLW   0x00
+    MOVWF   TRISH
+
+    MOVLW   0x00
+    MOVWF   TRISJ
     
     movlw 0x0
     movwf digit1
     movwf digit2
     movwf guess
-
+    movlw 0xA
+    movwf digit3
+    movwf digit4
+    
     movlw   b'00111111'
     movwf   light6
 
@@ -117,7 +128,9 @@ init:
     
     movlw   b'00000000'
     movwf   light0
-        
+    
+    movlw   0x0
+    movwf   dispctr   
 main:
 
     ;-----------------------------------------;
@@ -125,9 +138,8 @@ main:
     ;-----------------------------------------;
     call    listenStartButton	    ;Waits for pressing RF5
     call    assignRandomNumber	    ;Assigns Random number between 00-99
-    call    terminateTimerInterrupt ;
+    ;call    terminateTimerInterrupt ; Do not terminate Timer interupt because it necessary for showing 7SegmentDisplay
     call    SetEnergyFull
-    call    ShowNumbersD3D2
     call    listenButton
     ;-----------------------------------------;
     ;              Your code                  ;
@@ -187,23 +199,19 @@ IncreaseFirstDigit
     movlw   0x9			;W = 9
     cpfseq  digit1		;if number is 9 than skip increasing
     incf    digit1,1		;increase digit1
-    call    ShowNumbersD3D2
     goto    listenButton	;return to listen next button
 DecreaseFirstDigit 
     tstfsz  digit1		;if digit1 is 0 than skip decreasing
     decf    digit1,1		;decrease digit1
-    call    ShowNumbersD3D2
     goto    listenButton
 IncreaseSecondDigit 
     movlw   0x9			;W = 9
     cpfseq  digit2		;if digit2==9 than skip increasing
     incf    digit2,1
-    call    ShowNumbersD3D2
     goto    listenButton
 DecreaseSecondDigit     
     tstfsz  digit2
     decf    digit2,1
-    call    ShowNumbersD3D2
     goto    listenButton
 ShowSuccess
     movlw   0x9
@@ -231,16 +239,19 @@ GameOver
     goto listenButton
 CalculateGuess
     movlw   0x0
-    addwf   digit1,0
-    mullw   0x9
-    addwf   PRODL,0
-    addwf   digit2,0
-    movwf   guess
+    addwf   digit1,0	;w	= digit1
+    mullw   0x9		;prodl	= w * 9
+    addwf   PRODL,0	;w	= digit1 * 10;
+    addwf   digit2,0	;w	= w + digit2 = digit1*10 + digit2;
+    movwf   guess	;guess  = w
     return
 SetEnergyFull
-    movlw   0x6
-    movwf   energy
-    call    ShowEnergyLevel
+    movlw   0x6		    ;w = 6
+    movwf   energy	    ;set energy level 6
+    call    ShowEnergyLevel ;show energy level 
+    movlw   0x0		    ;w = 0
+    movwf   TMR0	    ;make tmr0=0
+    bsf	    intmode,0	    ;change intmode to showing 7segment display
     return
 DecreaseEnergyOrDie
     decf    energy,1
@@ -290,31 +301,6 @@ lightUp
     movf    lightN,0
     movwf   LATE
     return
-ShowNumbersD3D2
-    movf    digit1,0
-    call    segment
-    movwf   tempcmp
-    bsf	    LATH,0
-    bcf	    LATH,1
-    bcf	    LATH,2
-    bcf	    LATH,3
-    movff   LATJ,tempcmp
-    movlw   0x21
-    movwf   L1
-WAITFORIT
-    decfsz  L1, f
-    goto    WAITFORIT
-    movf    digit2,0
-    call    segment
-    movwf   tempcmp
-    bcf	    LATH,0
-    bsf	    LATH,1
-    bcf	    LATH,2
-    bcf	    LATH,3
-    movff   LATJ,tempcmp
-    return
-ShowNumbersD1D0
-    return
 ;500ms delay function
 Delay_500
 			;4999993 cycles
@@ -343,6 +329,8 @@ initTimer0
 
     movlw   B'01001111'	; Timer0 increment from internal clock with a prescaler of 1:256.
     movwf   T0CON
+    movlw   0x0
+    movwf   intmode
     bsf	    INTCON, TMR0IE 	; Enable TMR0 interrupt
     bsf	    INTCON, GIEH 	; Enable all interrupts
     bsf	    INTCON, GIE 	; Enable all interrupts
@@ -357,11 +345,57 @@ assignRandomNumber
     subwf  randNumber,1
     addwf  randNumber,0
     return
-
+    
+show_number_on_display
+    movf    dispctr,0
+    movff   PCL,STATUS      
+    rlncf   WREG,w 
+    addwf   PCL,f
+    goto    show_digit_1
+    goto    show_digit_2
+    goto    show_digit_3
+    goto    show_digit_4
+show_digit_1
+    movf    digit1,0
+    call    segment
+    movwf   LATJ
+    bcf	    LATH,3
+    bsf	    LATH,0
+    incf    dispctr,1
+    goto end_timer0_isr
+show_digit_2
+    movf    digit2,0
+    call    segment
+    movwf   LATJ
+    bcf	    LATH,0
+    bsf	    LATH,1
+    incf    dispctr,1
+    goto end_timer0_isr
+show_digit_3
+    movf    digit3,0
+    call    segment
+    movwf   LATJ
+    bcf	    LATH,1
+    bsf	    LATH,2
+    incf    dispctr,1
+    goto end_timer0_isr
+show_digit_4
+    movf    digit4,0
+    call    segment
+    movwf   LATJ
+    bcf	    LATH,2
+    bsf	    LATH,3    
+    movlw   0x0
+    movwf   dispctr
+    goto end_timer0_isr
+    
 timer0_isr
     call    save_registers ; save current content of STATUS and PCLATH registers to be abel to restore later
+    tstfsz  intmode
+    goto    show_number_on_display
     movlw   d'157'		;256-157=99
     movwf   TMR0
+end_timer0_isr
     bcf	    INTCON,TMR0IF
     call    restore_registers ; restore STATUS and PCLATH registers to their state before interrupt occurs
     retfie
@@ -410,11 +444,11 @@ segment
     retlw   0x07    ; 7 
     retlw   0x7f    ; 8 
     retlw   0x6f    ; 9 
-    retlw   0x77    ; A 
-    retlw   0x7c    ; B 
-    retlw   0x39    ; C 
-    retlw   0x5b    ; D 
-    retlw   0x79    ; E 
-    retlw   0x71    ; F 
-    retlw   0x7f    ; Just in case all on NUTS!!  
+    retlw   0x40    ; - 
+    retlw   0x40    ; - 
+    retlw   0x40    ; - 
+    retlw   0x40    ; - 
+    retlw   0x40    ; - 
+    retlw   0x40    ; - 
+    retlw   0x7f    ; 
 end

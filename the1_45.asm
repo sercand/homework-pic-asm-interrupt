@@ -18,9 +18,18 @@ PCLATH_TEMP equ	    022h
 randNumber  udata   0x23      
 randNumber
 
-	;----------------------------------------;
-    ;   Other variable declerations   ;
-    ;----------------------------------------;
+;----------------------------------------;
+;   Other variable declerations   ;
+;----------------------------------------;
+;Delay variables
+L1        EQU 0X31
+L2        EQU 0X32
+L3        EQU 0X33
+;
+digit1	  EQU 0x41
+digit2	  EQU 0x42
+guess	  EQU 0x43
+tempcmp	  EQU 0x44	  
 ;----------------------------------------;
 
     org	0x00
@@ -59,6 +68,12 @@ init:
 
     MOVLW   0x0F
     MOVWF   ADCON1
+    
+    movlw 0x0
+    movwf digit1
+    movwf digit2
+    movwf guess
+    
 main:
 
     ;-----------------------------------------;

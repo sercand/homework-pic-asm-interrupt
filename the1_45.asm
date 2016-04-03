@@ -22,14 +22,31 @@ randNumber
 ;   Other variable declerations   ;
 ;----------------------------------------;
 ;Delay variables
-L1        EQU 0X31
-L2        EQU 0X32
-L3        EQU 0X33
-;
-digit1	  EQU 0x41
-digit2	  EQU 0x42
-guess	  EQU 0x43
-tempcmp	  EQU 0x44	  
+L1      EQU	0X31
+L2      EQU	0X32
+L3      EQU	0X33
+;Light variables
+light6	EQU	0x34
+light5	EQU	0x35
+light4	EQU	0x36
+light3	EQU	0x37
+light2	EQU	0x38
+light1	EQU	0x39
+light0	EQU	0x3A
+
+;Data variables
+digit1	udata	0x41
+digit1
+digit2	udata	0x42
+digit2
+guess	udata	0x43
+guess
+tempcmp	udata	0x44
+tempcmp
+energy	udata	0x45
+energy
+lightN	udata	0x46
+lightN
 ;----------------------------------------;
 
     org	0x00
@@ -73,7 +90,28 @@ init:
     movwf digit1
     movwf digit2
     movwf guess
+
+    movlw   b'00111111'
+    movwf   light6
+
+    movlw   b'00111110'
+    movwf   light5
+     
+    movlw   b'00111100'
+    movwf   light4
+     
+    movlw   b'00111000'
+    movwf   light3
     
+    movlw   b'00110000'
+    movwf   light2
+    
+    movlw   b'00100000'
+    movwf   light1
+    
+    movlw   b'00000000'
+    movwf   light0
+        
 main:
 
     ;-----------------------------------------;
@@ -82,11 +120,13 @@ main:
     call    listenStartButton	    ;Waits for pressing RF5
     call    assignRandomNumber	    ;Assigns Random number between 00-99
     call    terminateTimerInterrupt ;
+    call    SetEnergyFull
     call    listenButton
     ;-----------------------------------------;
     ;              Your code                  ;
     ;-----------------------------------------;
 listenButton
+    call ShowNumbersD3D2
     btfsc   PORTF,0		;Listen button whether it is pressed or not. if no then skip.
     goto    ReleaseButton0
     btfsc   PORTF,1		;Listen button whether it is pressed or not. if no then skip.
@@ -132,23 +172,139 @@ ReleaseStartButton
     return
     
 CheckInput
-    
+    call    CalculateGuess	;Calculate guessed number from digit1 and digit2; w=digit1*10+digit2
+    movf    guess,0		;move guessed number to WREG
+    cpfseq  randNumber		;Compare guessed number and randNumber skip if equals
+    goto    DecreaseEnergyOrDie	;Guessed number is not equal to random number, decrease energy  
+    goto    ShowSuccess		;Guess is correct, Congratulations!!!
 IncreaseFirstDigit 
-
+    movlw   0x9			;W = 9
+    cpfseq  digit1		;if number is 9 than skip increasing
+    incf    digit1,1		;increase digit1
+    goto    listenButton	;return to listen next button
 DecreaseFirstDigit 
-
+    tstfsz  digit1		;if digit1 is 0 than skip decreasing
+    decf    digit1,1		;decrease digit1
+    goto    listenButton
 IncreaseSecondDigit 
-
+    movlw   0x9			;W = 9
+    cpfseq  digit2		;if digit2==9 than skip increasing
+    incf    digit2,1
+    goto    listenButton
 DecreaseSecondDigit     
-
-ShowCorrectAnswer
-
+    tstfsz  digit2
+    decf    digit2,1
+    goto    listenButton
+ShowSuccess
+    movlw   0x9
+    goto    listenButton    
 ShowHint
-
+    movf    guess,0
+    cpfsgt  randNumber
+    goto    ShowUpHint
+    goto    ShowDownHint    
 ShowDownHint
-goto listenStartButton
+    movlw   b'01000000'
+    movwf   LATB
+    movwf   LATD
+    movlw   b'11110000'
+    movwf   LATC
+    goto listenButton
 ShowUpHint
-goto listenStartButton
+    movlw   b'00000010'
+    movwf   LATB
+    movwf   LATD
+    movlw   b'00001111'
+    movwf   LATC
+    goto listenButton
+GameOver
+    goto listenButton
+CalculateGuess
+    movlw   0x0
+    addwf   digit1,0
+    mullw   0x9
+    addwf   PRODL,0
+    addwf   digit2,0
+    movwf   guess
+    return
+SetEnergyFull
+    movlw   0x6
+    movwf   energy
+    call    ShowEnergyLevel
+    return
+DecreaseEnergyOrDie
+    decf    energy,1
+    call    ShowEnergyLevel
+    tstfsz  energy
+    goto    ShowHint
+    goto    GameOver
+ShowEnergyLevel
+    movlw   0x6
+    cpfseq  energy
+    goto    check5
+    movff   light6, lightN
+    goto    lightUp
+check5
+    movlw   0x5
+    cpfseq  energy
+    goto    check4
+    movff   light5, lightN
+    goto    lightUp
+check4
+    movlw   0x4
+    cpfseq  energy
+    goto    check3
+    movff   light4, lightN
+    goto    lightUp   
+check3
+    movlw   0x3
+    cpfseq  energy
+    goto    check2
+    movff   light3, lightN
+    goto    lightUp  
+check2
+    movlw   0x2
+    cpfseq  energy
+    goto    check1
+    movff   light2, lightN
+    goto    lightUp 
+check1
+    movlw   0x1
+    cpfseq  energy
+    goto    check0
+    movff   light1, lightN
+    goto    lightUp     
+check0
+    movff   light0, lightN
+lightUp
+    movf    lightN,0
+    movwf   LATE
+    return
+ShowNumbersD3D2
+    movf    digit1,0
+    call    get7sB
+    movwf   tempcmp
+    bsf	    PORTH,0
+    bcf	    PORTH,1
+    bcf	    PORTH,2
+    bcf	    PORTH,3
+    movff   PORTJ,tempcmp
+    movlw   0x21
+    movwf   L1
+WAITFORIT
+    decfsz  L1, f
+    goto    WAITFORIT
+    movf    digit2,0
+    call    get7sB
+    movwf   tempcmp
+    bcf	    PORTH,0
+    bsf	    PORTH,1
+    bcf	    PORTH,2
+    bcf	    PORTH,3
+    movff   PORTJ,tempcmp
+    return
+ShowNumbersD1D0
+    return
 ;500ms delay function
 Delay_500
 			;4999993 cycles
@@ -230,5 +386,18 @@ restore_registers:
 
     return	
 ;--------------------------------------------------------------------------------------------------------------------------------------------------------------------;
-
+TABLES CODE
+get7sB
+    addwf   PCL,f
+    retlw   b'00111111' ;0 
+    retlw   b'00000110' ;1 
+    retlw   b'01011011' ;2 
+    retlw   b'01001111' ;3 
+    retlw   b'01100110' ;4 
+    retlw   b'01101101' ;5 
+    retlw   b'01111101' ;6 
+    retlw   b'00000111' ;7 
+    retlw   b'01111111' ;8 
+    retlw   b'01101111' ;9
+    
 end

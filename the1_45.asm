@@ -85,24 +85,24 @@ listenButton
     goto    listenButton
 ReleaseButton0
     btfss   PORTF,0		;Listen button whether it is released or not, if yes then skip.
-    goto    ReleaseButton0
     goto    CheckInput
+    goto    ReleaseButton0
 ReleaseButton1
     btfss   PORTF,1		;Listen button whether it is released or not, if yes then skip.
-    goto    ReleaseButton1
     goto    DecreaseSecondDigit
+    goto    ReleaseButton1
 ReleaseButton2
     btfss   PORTF,2		;Listen button whether it is released or not, if yes then skip.
-    goto    ReleaseButton2
     goto    IncreaseSecondDigit
+    goto    ReleaseButton2
 ReleaseButton3
     btfss   PORTF,3		;Listen button whether it is released or not, if yes then skip.
-    goto    ReleaseButton3
     goto    DecreaseFirstDigit
+    goto    ReleaseButton3
 ReleaseButton4
     btfss   PORTF,4		;Listen button whether it is released or not, if yes then skip.
-    goto    ReleaseButton4
     goto    IncreaseFirstDigit
+    goto    ReleaseButton4
 
     ;-----------------------------------------;
     ;         Your other subroutines          ;

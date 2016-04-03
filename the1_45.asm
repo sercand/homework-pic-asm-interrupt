@@ -294,11 +294,11 @@ ShowNumbersD3D2
     movf    digit1,0
     call    segment
     movwf   tempcmp
-    bsf	    PORTH,0
-    bcf	    PORTH,1
-    bcf	    PORTH,2
-    bcf	    PORTH,3
-    movff   PORTJ,tempcmp
+    bsf	    LATH,0
+    bcf	    LATH,1
+    bcf	    LATH,2
+    bcf	    LATH,3
+    movff   LATJ,tempcmp
     movlw   0x21
     movwf   L1
 WAITFORIT
@@ -307,11 +307,11 @@ WAITFORIT
     movf    digit2,0
     call    segment
     movwf   tempcmp
-    bcf	    PORTH,0
-    bsf	    PORTH,1
-    bcf	    PORTH,2
-    bcf	    PORTH,3
-    movff   PORTJ,tempcmp
+    bcf	    LATH,0
+    bsf	    LATH,1
+    bcf	    LATH,2
+    bcf	    LATH,3
+    movff   LATJ,tempcmp
     return
 ShowNumbersD1D0
     return

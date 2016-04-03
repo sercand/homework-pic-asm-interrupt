@@ -37,32 +37,103 @@ init:
     ;----------------------------------------;
     ;   Other required init configurations   ;
     ;----------------------------------------;
-    MOVLW   b'11111000'
-    MOVWF   TRISF
+    CLRF    LATF	;CLEAR LATF
+    CLRF    LATB	;CLEAR LATB
+    CLRF    LATC	;CLEAR LATC
+    CLRF    LATD	;CLEAR LATD
+    CLRF    LATE	;CLEAR LATE
+    
+    MOVLW   b'00111111'
+    MOVWF   TRISF	;portF will use as Input
+    MOVLW   0x00
+    MOVWF   TRISB	;portB shows Hint
+    MOVWF   TRISC	;portC shows Hint
+    MOVWF   TRISD	;portD shows Hint
+    MOVWF   TRISE	;portE shows enery
+    
+    CLRF    PORTF	;clear PortF
+    CLRF    PORTB	;clear PortB
+    CLRF    PORTC	;clear PortC
+    CLRF    PORTD	;clear PortD
+    CLRF    PORTE	;clear PortE
+
+    MOVLW   0x0F
+    MOVWF   ADCON1
 main:
 
     ;-----------------------------------------;
     ;              Your code                  ;
     ;-----------------------------------------;
-    call    listenStartButton 
-    call    assignRandomNumber
-    call    terminateTimerInterrupt
+    call    listenStartButton	    ;Waits for pressing RF5
+    call    assignRandomNumber	    ;Assigns Random number between 00-99
+    call    terminateTimerInterrupt ;
+    call    listenButton
     ;-----------------------------------------;
     ;              Your code                  ;
     ;-----------------------------------------;
+listenButton
+    btfsc   PORTF,0		;Listen button whether it is pressed or not. if no then skip.
+    goto    ReleaseButton0
+    btfsc   PORTF,1		;Listen button whether it is pressed or not. if no then skip.
+    goto    ReleaseButton1
+    btfsc   PORTF,2		;Listen button whether it is pressed or not. if no then skip.
+    goto    ReleaseButton2
+    btfsc   PORTF,3		;Listen button whether it is pressed or not. if no then skip.
+    goto    ReleaseButton3
+    btfsc   PORTF,4		;Listen button whether it is pressed or not. if no then skip.
+    goto    ReleaseButton4
+    goto    listenButton
+ReleaseButton0
+    btfss   PORTF,0		;Listen button whether it is released or not, if yes then skip.
+    goto    ReleaseButton0
+    goto    CheckInput
+ReleaseButton1
+    btfss   PORTF,1		;Listen button whether it is released or not, if yes then skip.
+    goto    ReleaseButton1
+    goto    DecreaseSecondDigit
+ReleaseButton2
+    btfss   PORTF,2		;Listen button whether it is released or not, if yes then skip.
+    goto    ReleaseButton2
+    goto    IncreaseSecondDigit
+ReleaseButton3
+    btfss   PORTF,3		;Listen button whether it is released or not, if yes then skip.
+    goto    ReleaseButton3
+    goto    DecreaseFirstDigit
+ReleaseButton4
+    btfss   PORTF,4		;Listen button whether it is released or not, if yes then skip.
+    goto    ReleaseButton4
+    goto    IncreaseFirstDigit
 
     ;-----------------------------------------;
     ;         Your other subroutines          ;
     ;-----------------------------------------;
 
 listenStartButton
-    btfsc   PORTF,5    ;Listen button whether it is pressed or not. if yes then skip.
+    btfss   PORTF,5		;Listen button whether it is pressed or not. if yes then skip.
     goto    listenStartButton
 ReleaseStartButton
-    btfss   PORTF,5      ;Listen button whether it is released or not, if yes then skip.
+    btfsc   PORTF,5		;Listen button whether it is released or not, if yes then skip.
     goto    ReleaseStartButton
-    return	
-	
+    return
+    
+CheckInput
+    
+IncreaseFirstDigit 
+
+DecreaseFirstDigit 
+
+IncreaseSecondDigit 
+
+DecreaseSecondDigit     
+
+ShowCorrectAnswer
+
+ShowHint
+
+ShowDownHint
+goto listenStartButton
+ShowUpHint
+goto listenStartButton
 ;------------------------ The suedo random generator functions by using TIMER0-------------------------------------------------------------------; 
 initTimer0
 

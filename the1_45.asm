@@ -222,8 +222,33 @@ DecreaseSecondDigit
     decf    digit2,1
     goto    listenButton
 ShowSuccess
-    movlw   0x9
-    goto    listenButton    
+    movff   cdig3,digit3
+    movff   cdig4,digit4
+    ;Show 500ms
+    call    Delay_500
+    movlw   0x5
+    movwf   dispctr
+    ;hide 500ms
+    call    Delay_500
+    movlw   0x0
+    movwf   dispctr
+    ;Show 500ms
+    call    Delay_500
+    movlw   0x5
+    movwf   dispctr
+    ;hide 500ms
+    call    Delay_500
+    movlw   0x0
+    movwf   dispctr
+    ;Show 500ms
+    call    Delay_500
+    movlw   0x5
+    movwf   dispctr
+    ;hide 500ms
+    call    Delay_500
+    movlw   0x0
+    movwf   dispctr
+    goto    ENDLESS_LOOP 
 ShowHint
     movf    guess,0
     cpfsgt  randNumber
@@ -390,6 +415,7 @@ show_number_on_display
     goto    show_digit_2
     goto    show_digit_3
     goto    show_digit_4
+    goto    no_digit_5
 show_digit_1
     movf    digit1,0
     call    segment
@@ -422,6 +448,12 @@ show_digit_4
     bsf	    LATH,3    
     movlw   0x0
     movwf   dispctr
+    goto end_timer0_isr
+no_digit_5
+    bcf	    LATH,0
+    bcf	    LATH,1
+    bcf	    LATH,2
+    bcf	    LATH,3
     goto end_timer0_isr
     
 timer0_isr

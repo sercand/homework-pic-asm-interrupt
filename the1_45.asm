@@ -219,8 +219,8 @@ ShowSuccess
 ShowHint
     movf    guess,0
     cpfsgt  randNumber
-    goto    ShowUpHint
-    goto    ShowDownHint    
+    goto    ShowDownHint
+    goto    ShowUpHint    
 ShowDownHint
     movlw   b'01000000'
     movwf   LATB
@@ -236,7 +236,26 @@ ShowUpHint
     movwf   LATC
     goto listenButton
 GameOver
-    goto listenButton
+    movlw   0xA
+    movwf   digit1
+    movwf   digit2
+    movwf   L1
+    movlw   0x0
+    movwf   tempcmp
+    movf    randNumber,0
+FIND_DIGIT3
+    cpfslt  L1 
+    goto    SET_DIGITS_3_4
+    incf    tempcmp,1
+    movwf   L2
+    movlw   0xA
+    subwf   L2,0
+SET_DIGITS_3_4
+    movwf   digit4
+    movff   digit3,tempcmp
+    call    Delay_500
+    call    Delay_500
+    SLEEP
 CalculateGuess
     movlw   0x0
     addwf   digit1,0	;w	= digit1

@@ -53,6 +53,10 @@ digit3	udata	0x49
 digit3
 digit4	udata	0x4A
 digit4
+cdig3	udata	0x4B
+cdig3
+cdig4	udata	0x4C
+cdig4
 ;----------------------------------------;
 
 org 0x00
@@ -104,10 +108,13 @@ init:
     movwf digit1
     movwf digit2
     movwf guess
-    movlw 0xA
-    movwf digit3
-    movwf digit4
+    movwf cdig3
+    movwf cdig4
     
+    movlw 0xA
+    movwf digit3    ; because A will show '-' on 7seg
+    movwf digit4    ; because A will show '-' on 7seg
+ 
     movlw   b'00111111'
     movwf   light6
 
@@ -140,6 +147,7 @@ main:
     call    assignRandomNumber	    ;Assigns Random number between 00-99
     ;call    terminateTimerInterrupt ; Do not terminate Timer interupt because it necessary for showing 7SegmentDisplay
     call    SetEnergyFull
+    call    CalculateCorrectDigits
     call    listenButton
     ;-----------------------------------------;
     ;              Your code                  ;
@@ -239,23 +247,31 @@ GameOver
     movlw   0xA
     movwf   digit1
     movwf   digit2
+    movff   cdig3,digit3
+    movff   cdig4,digit4
+ENDLESS_LOOP
+    call    Delay_500
+    call    Delay_500
+    goto    ENDLESS_LOOP
+CalculateCorrectDigits
+    movlw   0x9
     movwf   L1
     movlw   0x0
     movwf   tempcmp
     movf    randNumber,0
-FIND_DIGIT3
+CCG_FIND_DIGIT3
     cpfslt  L1 
     goto    SET_DIGITS_3_4
     incf    tempcmp,1
     movwf   L2
     movlw   0xA
     subwf   L2,0
+    goto    CCG_FIND_DIGIT3
 SET_DIGITS_3_4
-    movwf   digit4
-    movff   digit3,tempcmp
-    call    Delay_500
-    call    Delay_500
-    SLEEP
+    movwf   cdig4
+    movff   tempcmp,cdig3
+    return
+
 CalculateGuess
     movlw   0x0
     addwf   digit1,0	;w	= digit1

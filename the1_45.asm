@@ -103,14 +103,14 @@ init:
 
     MOVLW   0x00
     MOVWF   TRISJ
-    
+
     movlw 0x0
     movwf digit1
     movwf digit2
     movwf guess
     movwf cdig3
     movwf cdig4
-    
+    movwf intmode
     movlw 0xA
     movwf digit3    ; because A will show '-' on 7seg
     movwf digit4    ; because A will show '-' on 7seg
@@ -224,30 +224,36 @@ DecreaseSecondDigit
 ShowSuccess
     movff   cdig3,digit3
     movff   cdig4,digit4
-    ;Show 500ms
-    call    Delay_500
-    movlw   0x5
+    call    Delay_500       ;Show 500ms 
+        
+    movlw   0x4
     movwf   dispctr
-    ;hide 500ms
-    call    Delay_500
+    call    terminateTimerInterrupt
+    call    Delay_500	    ;hide 500ms
+    
+    movlw   0x0
+    movwf   dispctr 
+    call    initTimer0
+    call    Delay_500	    ;show 500ms
+    
+    movlw   0x4
+    movwf   dispctr
+    call    terminateTimerInterrupt
+    call    Delay_500	    ;hide 500ms 
+  
+    movlw   0x0
+    movwf   dispctr 
+    call    initTimer0
+    call    Delay_500	    ;show 500ms
+    
+    movlw   0x4
+    movwf   dispctr
+    call    terminateTimerInterrupt
+    call    Delay_500	    ;hide 500ms
+    
     movlw   0x0
     movwf   dispctr
-    ;Show 500ms
-    call    Delay_500
-    movlw   0x5
-    movwf   dispctr
-    ;hide 500ms
-    call    Delay_500
-    movlw   0x0
-    movwf   dispctr
-    ;Show 500ms
-    call    Delay_500
-    movlw   0x5
-    movwf   dispctr
-    ;hide 500ms
-    call    Delay_500
-    movlw   0x0
-    movwf   dispctr
+    call    initTimer0
     goto    ENDLESS_LOOP 
 ShowHint
     movf    guess,0
@@ -389,8 +395,6 @@ initTimer0
 
     movlw   B'01001111'	; Timer0 increment from internal clock with a prescaler of 1:256.
     movwf   T0CON
-    movlw   0x0
-    movwf   intmode
     bsf	    INTCON, TMR0IE 	; Enable TMR0 interrupt
     bsf	    INTCON, GIEH 	; Enable all interrupts
     bsf	    INTCON, GIE 	; Enable all interrupts
@@ -472,6 +476,10 @@ terminateTimerInterrupt
     bcf	    INTCON, TMR0IE 	; Disable TMR0 interrupt
     bcf	    INTCON, GIEH 	; Disable all interrupts
     bcf	    INTCON, GIE 	; Disable all interrupts
+    bcf	    LATH,0
+    bcf	    LATH,1
+    bcf	    LATH,2
+    bcf	    LATH,3
 return
 ;;;;;;;;;;;; Register handling for proper operation of main program ;;;;;;;;;;;;
 

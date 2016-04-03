@@ -149,6 +149,29 @@ ShowDownHint
 goto listenStartButton
 ShowUpHint
 goto listenStartButton
+;500ms delay function
+Delay_500
+			;4999993 cycles
+	movlw	0x2C
+	movwf	L1
+	movlw	0xE7
+	movwf	L2
+	movlw	0x0B
+	movwf	L3
+Delay_INNER
+	decfsz	L1, f
+WASTE0	goto	WASTE1
+	decfsz	L2, f
+WASTE1	goto	WASTE2
+	decfsz	L3, f
+WASTE2	goto	Delay_INNER
+
+			;3 cycles
+	nop
+	nop
+	nop
+			;4 cycles (including call)
+	return
 ;------------------------ The suedo random generator functions by using TIMER0-------------------------------------------------------------------; 
 initTimer0
 

@@ -68,6 +68,8 @@ init:
     CLRF    LATC	;CLEAR LATC
     CLRF    LATD	;CLEAR LATD
     CLRF    LATE	;CLEAR LATE
+    CLRF    LATH	;CLEAR LATH
+    CLRF    LATJ	;CLEAR LATJ   
     
     MOVLW   b'00111111'
     MOVWF   TRISF	;portF will use as Input
@@ -76,13 +78,17 @@ init:
     MOVWF   TRISC	;portC shows Hint
     MOVWF   TRISD	;portD shows Hint
     MOVWF   TRISE	;portE shows enery
+    MOVWF   TRISH	;portH for 7 segment
+    MOVWF   TRISJ	;portJ for 7 segment
     
     CLRF    PORTF	;clear PortF
     CLRF    PORTB	;clear PortB
     CLRF    PORTC	;clear PortC
     CLRF    PORTD	;clear PortD
     CLRF    PORTE	;clear PortE
-
+    CLRF    PORTH	;clear PortD
+    CLRF    PORTJ	;clear PortE
+    
     MOVLW   0x0F
     MOVWF   ADCON1
     
@@ -121,12 +127,12 @@ main:
     call    assignRandomNumber	    ;Assigns Random number between 00-99
     call    terminateTimerInterrupt ;
     call    SetEnergyFull
+    call    ShowNumbersD3D2
     call    listenButton
     ;-----------------------------------------;
     ;              Your code                  ;
     ;-----------------------------------------;
 listenButton
-    call ShowNumbersD3D2
     btfsc   PORTF,0		;Listen button whether it is pressed or not. if no then skip.
     goto    ReleaseButton0
     btfsc   PORTF,1		;Listen button whether it is pressed or not. if no then skip.
@@ -181,19 +187,23 @@ IncreaseFirstDigit
     movlw   0x9			;W = 9
     cpfseq  digit1		;if number is 9 than skip increasing
     incf    digit1,1		;increase digit1
+    call    ShowNumbersD3D2
     goto    listenButton	;return to listen next button
 DecreaseFirstDigit 
     tstfsz  digit1		;if digit1 is 0 than skip decreasing
     decf    digit1,1		;decrease digit1
+    call    ShowNumbersD3D2
     goto    listenButton
 IncreaseSecondDigit 
     movlw   0x9			;W = 9
     cpfseq  digit2		;if digit2==9 than skip increasing
     incf    digit2,1
+    call    ShowNumbersD3D2
     goto    listenButton
 DecreaseSecondDigit     
     tstfsz  digit2
     decf    digit2,1
+    call    ShowNumbersD3D2
     goto    listenButton
 ShowSuccess
     movlw   0x9
@@ -282,7 +292,7 @@ lightUp
     return
 ShowNumbersD3D2
     movf    digit1,0
-    call    get7sB
+    call    segment
     movwf   tempcmp
     bsf	    PORTH,0
     bcf	    PORTH,1
@@ -295,7 +305,7 @@ WAITFORIT
     decfsz  L1, f
     goto    WAITFORIT
     movf    digit2,0
-    call    get7sB
+    call    segment
     movwf   tempcmp
     bcf	    PORTH,0
     bsf	    PORTH,1
@@ -386,18 +396,25 @@ restore_registers:
 
     return	
 ;--------------------------------------------------------------------------------------------------------------------------------------------------------------------;
-TABLES CODE
-get7sB
-    addwf   PCL,f
-    retlw   b'00111111' ;0 
-    retlw   b'00000110' ;1 
-    retlw   b'01011011' ;2 
-    retlw   b'01001111' ;3 
-    retlw   b'01100110' ;4 
-    retlw   b'01101101' ;5 
-    retlw   b'01111101' ;6 
-    retlw   b'00000111' ;7 
-    retlw   b'01111111' ;8 
-    retlw   b'01101111' ;9
-    
+segment
+    movff   PCL,STATUS      
+    rlncf   WREG,w 
+    addwf   PCL,f 
+    retlw   0x3f    ; 0 code 
+    retlw   0x06    ; 1 
+    retlw   0x5b    ; 2 
+    retlw   0x4f    ; 3 
+    retlw   0x66    ; 4 
+    retlw   0x6d    ; 5 
+    retlw   0x7d    ; 6 
+    retlw   0x07    ; 7 
+    retlw   0x7f    ; 8 
+    retlw   0x6f    ; 9 
+    retlw   0x77    ; A 
+    retlw   0x7c    ; B 
+    retlw   0x39    ; C 
+    retlw   0x5b    ; D 
+    retlw   0x79    ; E 
+    retlw   0x71    ; F 
+    retlw   0x7f    ; Just in case all on NUTS!!  
 end
